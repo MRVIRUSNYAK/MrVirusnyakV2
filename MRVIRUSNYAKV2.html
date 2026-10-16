@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MrVirusnyak</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #fff;
+    position: relative;
+    background: #1a0033;
+  }
+
+  /* ===== ЛЁГКИЙ ЖИВОЙ ФОН ===== */
+  .bg-animated {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: linear-gradient(
+      135deg,
+      #4a0080 0%,
+      #003a80 25%,
+      #80003a 50%,
+      #00803a 75%,
+      #4a0080 100%
+    );
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-stars {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.9), transparent),
+      radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(2.5px 2.5px at 80% 20%, rgba(200,200,255,0.9), transparent),
+      radial-gradient(1.5px 1.5px at 10% 80%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(2px 2px at 40% 50%, rgba(255,200,255,0.8), transparent),
+      radial-gradient(1.5px 1.5px at 90% 60%, rgba(255,255,255,0.9), transparent),
+      radial-gradient(2px 2px at 30% 10%, rgba(200,255,255,0.8), transparent),
+      radial-gradient(1.5px 1.5px at 70% 90%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(2.5px 2.5px at 50% 20%, rgba(255,180,255,0.9), transparent),
+      radial-gradient(1.5px 1.5px at 15% 55%, rgba(255,255,255,0.8), transparent);
+  }
+
+  .bg-scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: 0.5;
+  }
+
+  /* ===== СТРАНИЦЫ ===== */
+
+  .page {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+    padding: 80px 20px 40px;
+  }
+
+  .page.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  h1 {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    margin: 0 0 30px 0;
+    text-align: center;
+    user-select: none;
+    text-shadow:
+      0 0 12px rgba(200, 0, 255, 0.9),
+      0 0 30px rgba(150, 0, 255, 0.6);
+  }
+
+  .buttons-row {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    z-index: 20;
+  }
+
+  .btn, .download-btn, .back-btn {
+    background: rgba(30, 0, 60, 0.75);
+    border: 1px solid rgba(180, 0, 255, 0.8);
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 0 15px rgba(150, 0, 255, 0.5);
+  }
+
+  .btn:hover, .download-btn:hover, .back-btn:hover {
+    background: rgba(100, 0, 180, 0.85);
+    border-color: rgba(220, 0, 255, 1);
+    box-shadow: 0 0 25px rgba(200, 0, 255, 0.9);
+    transform: scale(1.04);
+  }
+
+  .back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 14px;
+    padding: 10px 20px;
+    z-index: 30;
+  }
+
+  .bottom {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 0 20px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .bottom > * {
+    pointer-events: auto;
+  }
+
+  .description {
+    font-size: 17px;
+    line-height: 1.5;
+    max-width: 800px;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+  }
+
+  .socials-title {
+    font-size: 15px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+  }
+
+  .socials-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .socials {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #fff;
+    transition: transform 0.15s ease;
+  }
+
+  .socials:hover { transform: scale(1.06); }
+
+  .socials svg { width: 30px; height: 30px; }
+
+  .socials-yt svg { fill: #FF0000; }
+  .socials-tg svg { fill: #229ED9; }
+  .socials-ds svg { fill: #5865F2; }
+
+  .socials-text {
+    font-size: 16px;
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+  }
+
+  .projects-title {
+    font-size: 38px;
+    text-align: center;
+    margin: 0 0 20px 0;
+    text-shadow: 0 0 12px rgba(200, 0, 255, 0.9);
+  }
+
+  .slider-wrap {
+    width: 90%;
+    max-width: 900px;
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .slider-track {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 30px;
+    padding: 20px 10px;
+    user-select: none;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 0, 255, 0.8) rgba(40, 0, 80, 0.4);
+  }
+
+  .slider-track::-webkit-scrollbar { height: 10px; }
+  .slider-track::-webkit-scrollbar-track {
+    background: rgba(40, 0, 80, 0.4);
+    border-radius: 10px;
+    margin: 0 10px;
+  }
+  .slider-track::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, rgba(150, 0, 255, 0.9), rgba(200, 0, 255, 1));
+    border-radius: 10px;
+  }
+
+  .slide {
+    flex: 0 0 auto;
+    width: 500px;
+    max-width: 85vw;
+    background: rgba(30, 0, 60, 0.7);
+    border: 1px solid rgba(180, 0, 255, 0.6);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(150, 0, 255, 0.35);
+  }
+
+  .slide h2 {
+    font-size: 24px;
+    margin: 0 0 18px 0;
+    text-shadow: 0 0 10px rgba(180, 0, 255, 0.8);
+  }
+
+  .slide p {
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 22px 0;
+    opacity: 0.95;
+  }
+
+  .slider-arrows {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .arrow-btn {
+    background: rgba(30, 0, 60, 0.75);
+    border: 1px solid rgba(180, 0, 255, 0.8);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 12px rgba(150, 0, 255, 0.5);
+  }
+
+  .arrow-btn:hover {
+    background: rgba(100, 0, 180, 0.85);
+    border-color: rgba(220, 0, 255, 1);
+    box-shadow: 0 0 20px rgba(200, 0, 255, 0.9);
+    transform: scale(1.08);
+  }
+
+  .arrow-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ===== ЖЁЛТЫЙ ПРЕДУПРЕЖДАЮЩИЙ ТЕКСТ (только на странице проектов) ===== */
+  .warning-text {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 30px;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: #FFD700;
+    text-shadow:
+      0 0 8px rgba(255, 215, 0, 0.7),
+      0 0 16px rgba(255, 180, 0, 0.5),
+      0 1px 2px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+    z-index: 15;
+  }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 40px; }
+    .projects-title { font-size: 26px; }
+    .description { font-size: 15px; }
+    .socials-text { font-size: 14px; }
+    .slide { padding: 20px; }
+    .slide h2 { font-size: 20px; }
+    .warning-text { font-size: 11px; padding: 0 15px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Лёгкий живой фон -->
+  <div class="bg-animated"></div>
+  <div class="bg-stars"></div>
+  <div class="bg-scanlines"></div>
+
+  <!-- Главная -->
+  <div class="page active" id="page-main">
+    <h1>MrVirusnyak</h1>
+
+    <div class="buttons-row">
+      <button class="btn" id="btnProjects">Мои проекты</button>
+    </div>
+
+    <div class="bottom">
+      <div class="description">
+        Обычный вайбкодер: Делаю проги на C++, C# python и тд.. так же я делаю обзоры на ОС делаю обзоры на вирусы, игры и не только
+      </div>
+
+      <div>
+        <div class="socials-title">Мои соц-сети:</div>
+        <div class="socials-row">
+
+          <a class="socials socials-yt" href="https://www.youtube.com/@MRVIRUSNYAKXD" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            <span class="socials-text">Ютуб канал автора</span>
+          </a>
+
+          <a class="socials socials-tg" href="https://t.me/+MiWuiceAJOhmMTJi" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            <span class="socials-text">Наш ТГК (Сквад)</span>
+          </a>
+
+          <a class="socials socials-ds" href="https://discord.gg/6yjTEBQARK" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            <span class="socials-text">Наш дс сервер</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Проекты -->
+  <div class="page" id="page-projects">
+    <button class="back-btn" id="btnBack">← Назад</button>
+
+    <h1 class="projects-title">Мои проекты</h1>
+
+    <div class="slider-wrap">
+      <div class="slider-track" id="sliderTrack">
+
+        <div class="slide">
+          <h2>Winlocker Builder</h2>
+          <p>Билдер винлокера — можете указать свой заголовок, текст, пароль и нижний текст</p>
+          <a class="download-btn" href="https://www.mediafire.com/file/la41aryhhe2hl0f/Builder+1.1(BY+MRVIRUSNYAK'S_SQUAD).7z/file" target="_blank" rel="noopener">Скачать билдер</a>
+        </div>
+
+        <div class="slide">
+          <h2>JoinerBuilder</h2>
+          <p>Прога для склеивание файлов, можете задать иконку, свое сообщение, прописывать что-то в cmd, автозагрузку, и прочие..</p>
+          <a class="download-btn" href="https://www.mediafire.com/file/3vtmiukan1ra3b9/JoinerBuilder_%2528BY_MRVIRUSNYAK%2527S_SQUAD%2529.7z/file" target="_blank" rel="noopener">Скачать билдер</a>
+        </div>
+
+        <div class="slide">
+          <h2>CustomBsod</h2>
+          <p>Прога для фэйковой ошибки винды, BSOD, BIOS ERROR, Bsod (Windows 7 style) можете так же изменить код ошибки и цвет и перезагрузить винду после завершения, забилдить ехе, с своей иконкой сделан билдер чисто потролить кого-то</p>
+          <a class="download-btn" href="https://www.mediafire.com/file/8qaupmy21soy8n9/CUSTOMBSOD+BY+MRVIRUSNYAK'S+SQUAD.7z/file" target="_blank" rel="noopener">Скачать билдер</a>
+        </div>
+
+      </div>
+
+      <div class="slider-arrows">
+        <button class="arrow-btn" id="prevBtn">‹</button>
+        <button class="arrow-btn" id="nextBtn">›</button>
+      </div>
+    </div>
+
+    <!-- Жёлтый предупреждающий текст -->
+    <div class="warning-text">
+      ⚠ Я не несу ответственности за ваши действия, вы все берете за себя и не используйте что-то для плохих целей, и советую все на виртуалке запускать
+    </div>
+  </div>
+
+<script>
+  // ===== Переключение страниц =====
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(id);
+    if (target) target.classList.add('active');
+  }
+
+  document.getElementById('btnProjects').addEventListener('click', () => {
+    showPage('page-projects');
+    updateArrows();
+  });
+
+  document.getElementById('btnBack').addEventListener('click', () => {
+    showPage('page-main');
+  });
+
+  // ===== Слайдер =====
+  const track = document.getElementById('sliderTrack');
+  const slides = track.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let currentSlide = 0;
+
+  function goSlide(index) {
+    if (index < 0) index = 0;
+    if (index >= slides.length) index = slides.length - 1;
+    currentSlide = index;
+
+    const targetScroll = slides[index].offsetLeft - (track.clientWidth - slides[index].offsetWidth) / 2;
+    track.scrollTo({ left: targetScroll, behavior: 'smooth' });
+    updateArrows();
+  }
+
+  function updateArrows() {
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === slides.length - 1;
+  }
+
+  prevBtn.addEventListener('click', () => goSlide(currentSlide - 1));
+  nextBtn.addEventListener('click', () => goSlide(currentSlide + 1));
+
+  let scrollRaf = null;
+  track.addEventListener('scroll', () => {
+    if (scrollRaf) return;
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = null;
+      const trackCenter = track.scrollLeft + track.clientWidth / 2;
+      let closestIndex = 0;
+      let closestDist = Infinity;
+      slides.forEach((slide, i) => {
+        const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+        const dist = Math.abs(slideCenter - trackCenter);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIndex = i;
+        }
+      });
+      if (currentSlide !== closestIndex) {
+        currentSlide = closestIndex;
+        updateArrows();
+      }
+    });
+  });
+
+  // Перетаскивание мышью
+  let isDown = false;
+  let startX = 0;
+  let scrollLeftStart = 0;
+
+  track.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.download-btn')) return;
+    isDown = true;
+    startX = e.pageX;
+    scrollLeftStart = track.scrollLeft;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    track.scrollLeft = scrollLeftStart - (e.pageX - startX);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    const trackCenter = track.scrollLeft + track.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDist = Infinity;
+    slides.forEach((slide, i) => {
+      const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+      const dist = Math.abs(slideCenter - trackCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIndex = i;
+      }
+    });
+    goSlide(closestIndex);
+  });
+
+  // Тач
+  track.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    isDown = true;
+    startX = t.pageX;
+    scrollLeftStart = track.scrollLeft;
+  }, { passive: true });
+
+  track.addEventListener('touchmove', (e) => {
+    if (!isDown) return;
+    const t = e.touches[0];
+    track.scrollLeft = scrollLeftStart - (t.pageX - startX);
+  }, { passive: true });
+
+  track.addEventListener('touchend', () => {
+    isDown = false;
+    const trackCenter = track.scrollLeft + track.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDist = Infinity;
+    slides.forEach((slide, i) => {
+      const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+      const dist = Math.abs(slideCenter - trackCenter);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestIndex = i;
+      }
+    });
+    goSlide(closestIndex);
+  });
+
+  updateArrows();
+</script>
+</body>
+</html>
